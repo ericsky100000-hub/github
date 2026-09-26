@@ -39,6 +39,11 @@ function requireAdmin_(body) {
 function doGet(e) {
   const action = (e && e.parameter && e.parameter.action) || 'content';
   try {
+    if (action === 'admin') {
+      return HtmlService
+        .createHtmlOutputFromFile('Admin')
+        .setTitle('日心網站後台 CMS');
+    }
     if (action === 'content') {
       return json_({ ok: true, data: getSiteContent_() });
     }
