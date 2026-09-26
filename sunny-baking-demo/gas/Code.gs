@@ -195,3 +195,55 @@ function json_(obj) {
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
+
+
+/**
+ * GAS 同網域後台橋接：避免 GitHub Pages 跨網域 CORS 問題
+ */
+function adminLoadData() {
+  return {
+    ok: true,
+    data: getSiteContent_()
+  };
+}
+
+function adminSaveDraft(adminKey, data) {
+  requireAdmin_({ adminKey: adminKey });
+
+  saveSiteContent_(data || {});
+
+  addHistory_(
+    '儲存草稿',
+    'GAS CMS Admin',
+    ''
+  );
+
+  return {
+    ok: true,
+    message: '草稿已儲存到 Google Sheets'
+  };
+}
+
+function adminPublish(adminKey, data) {
+  requireAdmin_({ adminKey: adminKey });
+
+  saveSiteContent_(data || {});
+
+  setKeyValue_(
+    SHEETS.settings,
+    'publish_status',
+    'published'
+  );
+
+  addHistory_(
+    '發布更新',
+    'GAS CMS Admin',
+    ''
+  );
+
+  return {
+    ok: true,
+    message: '已發布到 Google Sheets',
+    publishedAt: new Date().toISOString()
+  };
+}
