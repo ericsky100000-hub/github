@@ -35,3 +35,16 @@ POST JSON:
 
 ## 安全注意
 目前程式是第一階段資料 API 骨架。正式允許後台寫入前，需加入管理員驗證，不應把寫入權限直接暴露給匿名公開網頁。
+
+
+## CORS 修正版架構
+GitHub Pages 後台直接 fetch Apps Script 會受跨網域限制影響，因此正式 CMS 後台改為 GAS-hosted Admin。
+
+- 前台：GitHub Pages
+- 後台：Apps Script Web App ?action=admin
+- 資料庫：獨立 Google Sheets
+- 管理寫入：google.script.run -> Apps Script -> Google Sheets
+- 公開讀取：?action=content
+- 健康檢查：?action=health
+
+新增檔案：Admin.html
