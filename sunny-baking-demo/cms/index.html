@@ -161,6 +161,18 @@ main{padding:24px}.top{display:flex;justify-content:space-between;gap:16px;align
   </section>
 
   <section id="settings" class="page">
+    <div class="card" style="margin-bottom:14px">
+      <h3>GAS API 連線</h3>
+      <div class="form-grid">
+        <div class="field full"><label>Web App URL</label><input id="apiUrl" value="https://script.google.com/macros/s/AKfycbxmwjvvrqaUkhKaH1LJiIxn0eJffc3m3x3n_BE4ePdkf-DSAjCMjKkZc4_3iUnGCNoF/exec"></div>
+        <div class="field full"><label>管理員金鑰</label><input id="adminKey" type="password" placeholder="只儲存在本次瀏覽器工作階段，不寫入 GitHub"></div>
+      </div>
+      <div class="actions" style="margin-top:12px">
+        <button class="btn" onclick="testApi()">測試連線</button>
+        <button class="btn primary" onclick="loadFromApi()">從 Google Sheets 載入</button>
+      </div>
+      <p class="muted">管理員金鑰只保存在 sessionStorage，關閉瀏覽器分頁後即清除。</p>
+    </div>
     <div class="card">
       <h3>資料備份與還原</h3>
       <p class="muted">可匯出 JSON 備份；正式 GAS 版可再增加 Excel 匯出與 Google Drive 備份。</p>
@@ -231,8 +243,56 @@ function duplicateProduct(i){let p=clone(data.products[i]);p.code=p.code+"-COPY"
 function toggleProduct(i){data.products[i].enabled=!data.products[i].enabled;persist();renderProducts()}
 function removeProduct(i){if(confirm("確定刪除此產品？正式版建議以停用取代刪除。")){data.products.splice(i,1);persist();renderProducts()}}
 function saveCategories(){data.categories=categoryText.value.split("\n").map(x=>x.trim()).filter(Boolean);persist();renderProducts();alert("分類已儲存")}
-function saveDraft(){data.history.push({action:"儲存草稿",time:new Date().toLocaleString()});persist();renderDashboard();alert("草稿已儲存")}
-function publishSite(){data.history.push({action:"發布更新",time:new Date().toLocaleString()});persist();renderDashboard();alert("CMS 樣本已記錄發布。正式串接 GAS 後，這裡會同步到 Google Sheets 並更新前台。")}
+const DEFAULT_API_URL="https://script.google.com/macros/s/AKfycbxmwjvvrqaUkhKaH1LJiIxn0eJffc3m3x3n_BE4ePdkf-DSAjCMjKkZc4_3iUnGCNoF/exec";
+function getApiUrl(){return (document.getElementById("apiUrl")?.value||DEFAULT_API_URL).trim()}
+function getAdminKey(){return (document.getElementById("adminKey")?.value||sessionStorage.getItem("sunnyCmsAdminKey")||"").trim()}
+function rememberAdminKey(){const k=document.getElementById("adminKey")?.value||"";if(k)sessionStorage.setItem("sunnyCmsAdminKey",k)}
+async function apiPost(action){
+  rememberAdminKey();
+  const adminKey=getAdminKey();
+  if(!adminKey){alert("請先到「網站設定」輸入管理員金鑰");throw new Error("Missing admin key")}
+  const res=await fetch(getApiUrl(),{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action,adminKey,data,user:"CMS Admin"})});
+  return await res.json();
+}
+async function saveDraft(){
+  try{
+    const r=await apiPost("saveContent");
+    if(!r.ok)throw new Error(r.error||"儲存失敗");
+    data.history.push({action:"儲存草稿",time:new Date().toLocaleString()});persist();renderDashboard();alert("草稿已儲存到 Google Sheets");
+  }catch(e){alert("儲存失敗："+e.message)}
+}
+async function publishSite(){
+  try{
+    const r=await apiPost("publish");
+    if(!r.ok)throw new Error(r.error||"發布失敗");
+    data.history.push({action:"發布更新",time:new Date().toLocaleString()});persist();renderDashboard();alert("已發布到 Google Sheets。下一階段再讓前台直接讀取已發布資料。");
+  }catch(e){alert("發布失敗："+e.message)}
+}
+async function testApi(){
+  try{
+    const r=await fetch(getApiUrl()+"?action=health").then(x=>x.json());
+    alert(r.ok?"API 連線正常":"API 連線失敗");
+  }catch(e){alert("API 連線失敗："+e.message)}
+}
+async function loadFromApi(){
+  try{
+    const r=await fetch(getApiUrl()+"?action=content").then(x=>x.json());
+    if(!r.ok)throw new Error(r.error||"讀取失敗");
+    const x=r.data||{};
+    if(x.home)data.home={title:x.home.hero_title||data.home.title,subtitle:x.home.hero_subtitle||data.home.subtitle,description:x.home.hero_description||data.home.description,ctaPrimary:x.home.cta_primary||data.home.ctaPrimary,ctaSecondary:x.home.cta_secondary||data.home.ctaSecondary};
+    if(x.about)data.about={company:x.about.company||"",brandEn:x.about.brand_en||"",originYear:x.about.origin_year||"",transformYear:x.about.transform_year||"",history:x.about.history||"",factory:x.about.factory||"",b2b:x.about.b2b||""};
+    if(Array.isArray(x.specialty)&&x.specialty.length){data.specialty={description:data.specialty.description,frozenDough:x.specialty.find(v=>v.type==="frozen_dough")?.flow||"",shapedDough:x.specialty.find(v=>v.type==="shaped_dough")?.flow||"",prebaked:x.specialty.find(v=>v.type==="prebaked")?.flow||"",prefProofed:x.specialty.find(v=>v.type==="pref_proofed")?.flow||""}}
+    if(Array.isArray(x.categories)&&x.categories.length)data.categories=x.categories.filter(v=>v.enabled!==false).sort((a,b)=>(a.sort||0)-(b.sort||0)).map(v=>v.name);
+    if(Array.isArray(x.products))data.products=x.products.map(p=>({enabled:p.enabled===true||String(p.enabled).toLowerCase()==="true",code:p.code||"",name:p.name||"",category:p.category||"",weight:p.weight||"",pack:p.pack||"",storage:p.storage||"",delivery:p.delivery||"",shelf:p.shelf_life||"",vegetarian:p.vegetarian||"",allergen:p.allergen||"",price:p.price||"",showPrice:p.show_price===true||String(p.show_price).toLowerCase()==="true",description:p.description||""}));
+    if(x.oem)data.oem={title:x.oem.title||"",description:x.oem.description||"",catalog:x.oem.catalog_share||"",oemShare:x.oem.oem_share||"",odmShare:x.oem.odm_share||"",moq:x.oem.moq||""};
+    if(Array.isArray(x.quality)){const ins=x.quality.find(v=>v.type==="insurance");data.quality={registrations:x.quality.filter(v=>v.type==="registration").map(v=>v.name).join("、"),insurer:ins?.detail?.split("｜")[0]||"",insuranceAmount:ins?.detail?.split("｜")[1]||""}}
+    if(x.contact)data.contact={company:x.contact.company||"",phone:x.contact.phone||"",address:x.contact.address||"",email:x.contact.email||"",line:x.contact.line||"",instagram:x.contact.instagram||"",facebook:x.contact.facebook||""};
+    persist();bindFields();renderProducts();renderDashboard();
+document.getElementById("apiUrl").value=localStorage.getItem("sunnyCmsApiUrl")||DEFAULT_API_URL;
+document.getElementById("apiUrl").addEventListener("change",e=>localStorage.setItem("sunnyCmsApiUrl",e.target.value.trim()));
+document.getElementById("adminKey").value=sessionStorage.getItem("sunnyCmsAdminKey")||"";alert("已從 Google Sheets 載入最新資料");
+  }catch(e){alert("載入失敗："+e.message)}
+}
 function previewSite(){window.open("../","_blank")}
 function exportBackup(){let blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="sunny-baking-cms-backup.json";a.click();URL.revokeObjectURL(a.href)}
 function importBackup(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{data=JSON.parse(r.result);persist();location.reload()}catch(err){alert("JSON 格式不正確")}};r.readAsText(f)}
