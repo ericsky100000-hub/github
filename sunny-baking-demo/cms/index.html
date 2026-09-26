@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>日心食品網站後台 CMS V1</title>
+<style>
+:root{--red:#b41f2a;--gold:#eebd37;--ink:#251b17;--muted:#71665f;--bg:#f6f4f1;--card:#fff;--line:#e6ded5;--green:#25834b}
+*{box-sizing:border-box}body{margin:0;font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+button,input,textarea,select{font:inherit}button{cursor:pointer}
+.app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+aside{background:#211814;color:#fff;padding:24px 16px;position:sticky;top:0;height:100vh}
+.brand{display:flex;gap:10px;align-items:center;padding:0 8px 24px}.mark{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--red);font-weight:900}.brand small{display:block;color:#bfb2aa}
+nav button{width:100%;border:0;background:transparent;color:#ddd;text-align:left;padding:12px 14px;border-radius:10px;margin:2px 0}nav button.active,nav button:hover{background:#ffffff14;color:#fff}
+main{padding:24px}.top{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:20px}.top h1{font-size:24px;margin:0}.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:#fff;padding:9px 13px;border-radius:10px;font-weight:800}.btn.primary{background:var(--red);color:#fff;border-color:var(--red)}.btn.green{background:var(--green);color:#fff;border-color:var(--green)}
+.page{display:none}.page.active{display:block}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 4px 16px #0000000a}.metric b{font-size:28px;color:var(--red);display:block}.muted{color:var(--muted);font-size:13px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:13px;font-weight:800}.field input,.field textarea,.field select{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff}.field textarea{min-height:110px;resize:vertical}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:26px 0 12px}.section-title h2{font-size:18px;margin:0}
+.table-wrap{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;min-width:900px}th,td{padding:12px;border-bottom:1px solid #eee;text-align:left;font-size:13px}th{background:#faf8f5}.status{padding:4px 8px;border-radius:999px;font-size:12px;font-weight:800}.on{background:#e7f5ea;color:#20733e}.off{background:#eee;color:#666}
+.row-actions{display:flex;gap:6px}.row-actions button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 9px}
+.notice{background:#fff5d9;border:1px solid #ecd18a;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px}
+.history{display:grid;gap:8px}.history-item{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px}
+@media(max-width:950px){.app{grid-template-columns:1fr}aside{position:relative;height:auto}nav{display:flex;overflow:auto}nav button{white-space:nowrap}.grid,.form-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:650px){main{padding:14px}.grid,.form-grid{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <div class="brand"><div class="mark">日</div><div><b>日心網站後台</b><small>CMS V1</small></div></div>
+  <nav id="nav">
+    <button class="active" data-page="dashboard">儀表板</button>
+    <button data-page="home">首頁管理</button>
+    <button data-page="about">企業介紹</button>
+    <button data-page="specialty">專營項目</button>
+    <button data-page="products">產品管理</button>
+    <button data-page="categories">分類管理</button>
+    <button data-page="oem">OEM / ODM</button>
+    <button data-page="quality">品質認證</button>
+    <button data-page="contact">聯絡資訊</button>
+    <button data-page="settings">網站設定</button>
+  </nav>
+</aside>
+
+<main>
+  <div class="top">
+    <div><h1 id="pageTitle">儀表板</h1><div class="muted">日心食品品牌網站內容管理</div></div>
+    <div class="actions">
+      <button class="btn" onclick="saveDraft()">儲存草稿</button>
+      <button class="btn" onclick="previewSite()">預覽網站</button>
+      <button class="btn green" onclick="publishSite()">發布更新</button>
+    </div>
+  </div>
+
+  <div class="notice">目前為 CMS V1 樣本後台：已具備內容編輯、產品管理、草稿、版本紀錄與 JSON 備份。正式串接 Google Sheets / Apps Script 後，按「發布更新」即可同步前台。</div>
+
+  <section id="dashboard" class="page active">
+    <div class="grid">
+      <div class="card metric"><b id="mProducts">6</b><span>產品總數</span><div class="muted">目前樣本資料</div></div>
+      <div class="card metric"><b id="mOnline">6</b><span>上架產品</span><div class="muted">可快速停用</div></div>
+      <div class="card metric"><b>8</b><span>內容模組</span><div class="muted">企業、產品、OEM 等</div></div>
+      <div class="card metric"><b id="mHistory">0</b><span>版本紀錄</span><div class="muted">發布時自動保存</div></div>
+    </div>
+    <div class="section-title"><h2>最近修改紀錄</h2></div>
+    <div id="historyList" class="history"></div>
+  </section>
+
+  <section id="home" class="page">
+    <div class="card form-grid">
+      <div class="field full"><label>首頁主標題</label><input data-bind="home.title"></div>
+      <div class="field full"><label>首頁副標題</label><input data-bind="home.subtitle"></div>
+      <div class="field full"><label>首頁說明</label><textarea data-bind="home.description"></textarea></div>
+      <div class="field"><label>主要按鈕文字</label><input data-bind="home.ctaPrimary"></div>
+      <div class="field"><label>次要按鈕文字</label><input data-bind="home.ctaSecondary"></div>
+    </div>
+  </section>
+
+  <section id="about" class="page">
+    <div class="card form-grid">
+      <div class="field"><label>公司名稱</label><input data-bind="about.company"></div>
+      <div class="field"><label>品牌英文名</label><input data-bind="about.brandEn"></div>
+      <div class="field"><label>源起年份</label><input data-bind="about.originYear"></div>
+      <div class="field"><label>轉型年份</label><input data-bind="about.transformYear"></div>
+      <div class="field full"><label>公司沿革</label><textarea data-bind="about.history"></textarea></div>
+      <div class="field full"><label>廠房資訊</label><textarea data-bind="about.factory"></textarea></div>
+      <div class="field full"><label>B2B 定位</label><textarea data-bind="about.b2b"></textarea></div>
+    </div>
+  </section>
+
+  <section id="specialty" class="page">
+    <div class="card form-grid">
+      <div class="field full"><label>專營項目說明</label><textarea data-bind="specialty.description"></textarea></div>
+      <div class="field"><label>冷凍麵糰流程</label><input data-bind="specialty.frozenDough"></div>
+      <div class="field"><label>整形冷凍麵糰流程</label><input data-bind="specialty.shapedDough"></div>
+      <div class="field"><label>預烤焙冷凍麵包流程</label><input data-bind="specialty.prebaked"></div>
+      <div class="field"><label>預發酵冷凍麵糰</label><input data-bind="specialty.prefProofed"></div>
+    </div>
+  </section>
+
+  <section id="products" class="page">
+    <div class="section-title"><h2>產品列表</h2><button class="btn primary" onclick="addProduct()">＋新增產品</button></div>
+    <div class="table-wrap"><table><thead><tr><th>狀態</th><th>編號</th><th>產品名稱</th><th>分類</th><th>規格</th><th>價格</th><th>操作</th></tr></thead><tbody id="productRows"></tbody></table></div>
+    <div class="section-title"><h2>產品編輯</h2></div>
+    <div class="card form-grid">
+      <input type="hidden" id="productIndex">
+      <div class="field"><label>產品編號</label><input id="pCode"></div>
+      <div class="field"><label>產品名稱</label><input id="pName"></div>
+      <div class="field"><label>分類</label><select id="pCategory"></select></div>
+      <div class="field"><label>狀態</label><select id="pEnabled"><option value="true">上架</option><option value="false">隱藏</option></select></div>
+      <div class="field"><label>重量</label><input id="pWeight"></div>
+      <div class="field"><label>包裝規格</label><input id="pPack"></div>
+      <div class="field"><label>保存溫度</label><input id="pStorage"></div>
+      <div class="field"><label>配送溫度</label><input id="pDelivery"></div>
+      <div class="field"><label>有效期限</label><input id="pShelf"></div>
+      <div class="field"><label>素食別</label><input id="pVegetarian"></div>
+      <div class="field full"><label>過敏原</label><input id="pAllergen"></div>
+      <div class="field"><label>公開牌價</label><input id="pPrice"></div>
+      <div class="field"><label>顯示價格</label><select id="pShowPrice"><option value="true">顯示</option><option value="false">不顯示</option></select></div>
+      <div class="field full"><label>產品介紹</label><textarea id="pDesc"></textarea></div>
+      <div class="field full"><button class="btn primary" onclick="saveProduct()">儲存產品</button></div>
+    </div>
+  </section>
+
+  <section id="categories" class="page">
+    <div class="card">
+      <div class="muted">分類可自由新增、重新命名、排序；V1 樣本先提供文字編輯。</div>
+      <div class="field full" style="margin-top:12px"><label>產品分類（每行一個）</label><textarea id="categoryText" style="min-height:220px"></textarea></div>
+      <button class="btn primary" onclick="saveCategories()">儲存分類</button>
+    </div>
+  </section>
+
+  <section id="oem" class="page">
+    <div class="card form-grid">
+      <div class="field full"><label>OEM / ODM 主標題</label><input data-bind="oem.title"></div>
+      <div class="field full"><label>合作說明</label><textarea data-bind="oem.description"></textarea></div>
+      <div class="field"><label>目錄商品占比</label><input data-bind="oem.catalog"></div>
+      <div class="field"><label>OEM 占比</label><input data-bind="oem.oemShare"></div>
+      <div class="field"><label>ODM 占比</label><input data-bind="oem.odmShare"></div>
+      <div class="field"><label>MOQ 說明</label><input data-bind="oem.moq"></div>
+    </div>
+  </section>
+
+  <section id="quality" class="page">
+    <div class="card form-grid">
+      <div class="field full"><label>食品相關登記</label><textarea data-bind="quality.registrations"></textarea></div>
+      <div class="field"><label>保險公司</label><input data-bind="quality.insurer"></div>
+      <div class="field"><label>產品責任險額度</label><input data-bind="quality.insuranceAmount"></div>
+    </div>
+  </section>
+
+  <section id="contact" class="page">
+    <div class="card form-grid">
+      <div class="field"><label>公司名稱</label><input data-bind="contact.company"></div>
+      <div class="field"><label>電話</label><input data-bind="contact.phone"></div>
+      <div class="field full"><label>地址</label><input data-bind="contact.address"></div>
+      <div class="field"><label>Email</label><input data-bind="contact.email"></div>
+      <div class="field"><label>LINE</label><input data-bind="contact.line"></div>
+      <div class="field"><label>Instagram</label><input data-bind="contact.instagram"></div>
+      <div class="field"><label>Facebook</label><input data-bind="contact.facebook"></div>
+    </div>
+  </section>
+
+  <section id="settings" class="page">
+    <div class="card">
+      <h3>資料備份與還原</h3>
+      <p class="muted">可匯出 JSON 備份；正式 GAS 版可再增加 Excel 匯出與 Google Drive 備份。</p>
+      <div class="actions">
+        <button class="btn" onclick="exportBackup()">匯出 JSON</button>
+        <label class="btn">匯入 JSON<input id="importFile" type="file" accept=".json" hidden onchange="importBackup(event)"></label>
+        <button class="btn" onclick="resetData()">還原預設資料</button>
+      </div>
+    </div>
+  </section>
+</main>
+</div>
+
+<script>
+const DEFAULT_DATA = {
+  home:{title:"讓烘焙更穩定，讓出爐更有效率。",subtitle:"B2B 烘焙供應・冷凍麵糰專業製造",description:"日心食品源自 2020 年創立的「日心餐飲」，2024 年正式轉型為「日心食品」，全面聚焦 B2B 烘焙冷凍麵糰代工，並提供 OEM、ODM 與客製開發服務。",ctaPrimary:"瀏覽產品",ctaSecondary:"索取報價 / 洽談合作"},
+  about:{company:"日心食品有限公司",brandEn:"SUNNY BAKING",originYear:"2020",transformYear:"2024",history:"源自 2020 年創立之「日心餐飲」（深耕零售終端），於 2024 年正式轉型為「日心食品」，專注於烘焙冷凍麵糰代工。",factory:"廠房坐落於新北市新莊區頂崁工業區，擁有標準化生產基地。",b2b:"全面聚焦 B2B 商業模式，目前不提供一般零售服務。"},
+  specialty:{description:"主營三大類冷凍麵糰，滿足不同烘焙場域的效率需求。",frozenDough:"解凍 → 發酵 → 整形 → 發酵 → 烤焙",shapedDough:"解凍 → 發酵 → 烤焙",prebaked:"解凍 → 烤焙",prefProofed:"目前暫無生產規劃"},
+  oem:{title:"OEM・ODM 與客製合作",description:"接受客戶委託開發專屬冷凍麵糰商品，配合基本訂購量 MOQ 要求。目錄產品皆有公開牌價；客製化開發商品依規格另外報價。",catalog:"70%",oemShare:"25%",odmShare:"5%",moq:"依產品規格與合作內容評估"},
+  quality:{registrations:"食品營業登記證、食品藥物業者登錄平台（非登不可）",insurer:"富邦產物",insuranceAmount:"新台幣 1,000 萬元"},
+  contact:{company:"日心食品有限公司",phone:"02-8522-2731",address:"新北市新莊區化成路 431 巷 74 號",email:"",line:"",instagram:"https://www.instagram.com/sunnybaking_tw/",facebook:"https://www.facebook.com/sunnybaking.tw/?locale=zh_TW"},
+  categories:["冷凍麵糰","整形冷凍麵糰","預烤焙冷凍麵包","歐式麵包","甜麵包","吐司產品","西點蛋糕","節慶產品"],
+  products:[
+    {enabled:true,code:"601",name:"丹麥大可頌",category:"冷凍麵糰",weight:"60g±5g / 個",pack:"80 個 / 箱",storage:"",delivery:"",shelf:"",vegetarian:"",allergen:"",price:"",showPrice:true,description:""},
+    {enabled:true,code:"603",name:"軟法麵糰",category:"冷凍麵糰",weight:"120g±3g / 個",pack:"40 個 / 箱",storage:"",delivery:"",shelf:"",vegetarian:"",allergen:"",price:"",showPrice:true,description:""},
+    {enabled:true,code:"608",name:"布里歐麵糰",category:"冷凍麵糰",weight:"60g±3g / 個",pack:"80 個 / 箱",storage:"",delivery:"",shelf:"",vegetarian:"",allergen:"",price:"",showPrice:true,description:""},
+    {enabled:true,code:"701",name:"鹽可頌麵糰",category:"整形冷凍麵糰",weight:"50g±5g / 個",pack:"80 個 / 箱",storage:"",delivery:"",shelf:"",vegetarian:"",allergen:"",price:"",showPrice:true,description:""},
+    {enabled:true,code:"PC-0702",name:"羅宋麵糰",category:"整形冷凍麵糰",weight:"120±5g / 顆",pack:"40 顆 / 箱",storage:"-18°C 以下",delivery:"-15°C 以下冷凍配送",shelf:"未開封 6 個月",vegetarian:"奶素",allergen:"牛奶、麩質之穀物及其製品",price:"",showPrice:true,description:"Ver 1.1｜內包裝：食品級塑膠袋；外包裝：冷凍麵糰紙箱"},
+    {enabled:true,code:"703",name:"經典肉桂捲",category:"整形冷凍麵糰",weight:"90g±10g / 個",pack:"50 個 / 箱",storage:"",delivery:"",shelf:"",vegetarian:"",allergen:"",price:"",showPrice:true,description:""}
+  ],
+  history:[]
+};
+let data = loadData();
+function clone(v){return JSON.parse(JSON.stringify(v))}
+function loadData(){try{return JSON.parse(localStorage.getItem("sunnyCmsData"))||clone(DEFAULT_DATA)}catch(e){return clone(DEFAULT_DATA)}}
+function persist(){localStorage.setItem("sunnyCmsData",JSON.stringify(data))}
+function getPath(path){return path.split(".").reduce((o,k)=>o?.[k],data)}
+function setPath(path,val){let a=path.split("."),o=data;while(a.length>1){o=o[a.shift()]}o[a[0]]=val}
+function bindFields(){
+  document.querySelectorAll("[data-bind]").forEach(el=>{
+    el.value=getPath(el.dataset.bind)??"";
+    el.oninput=()=>{setPath(el.dataset.bind,el.value);persist()}
+  })
+}
+document.querySelectorAll("#nav button").forEach(btn=>btn.onclick=()=>{
+  document.querySelectorAll("#nav button").forEach(b=>b.classList.remove("active"));btn.classList.add("active");
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));document.getElementById(btn.dataset.page).classList.add("active");
+  document.getElementById("pageTitle").textContent=btn.textContent;
+  if(btn.dataset.page==="products") renderProducts();
+  if(btn.dataset.page==="categories") document.getElementById("categoryText").value=data.categories.join("\n");
+});
+function renderDashboard(){
+  mProducts.textContent=data.products.length;mOnline.textContent=data.products.filter(p=>p.enabled).length;mHistory.textContent=data.history.length;
+  historyList.innerHTML=data.history.length?data.history.slice().reverse().slice(0,8).map(h=>`<div class="history-item"><b>${h.action}</b><div class="muted">${h.time}</div></div>`).join(""):'<div class="muted">尚無發布紀錄</div>'
+}
+function renderProducts(){
+  pCategory.innerHTML=data.categories.map(c=>`<option>${c}</option>`).join("");
+  productRows.innerHTML=data.products.map((p,i)=>`<tr>
+    <td><span class="status ${p.enabled?'on':'off'}">${p.enabled?'上架':'隱藏'}</span></td><td>${p.code}</td><td>${p.name}</td><td>${p.category}</td><td>${p.pack||''}</td><td>${p.showPrice?(p.price||'公開'):'不顯示'}</td>
+    <td><div class="row-actions"><button onclick="editProduct(${i})">編輯</button><button onclick="duplicateProduct(${i})">複製</button><button onclick="toggleProduct(${i})">${p.enabled?'下架':'上架'}</button><button onclick="removeProduct(${i})">刪除</button></div></td></tr>`).join("");
+  renderDashboard()
+}
+function clearProductForm(){["pCode","pName","pWeight","pPack","pStorage","pDelivery","pShelf","pVegetarian","pAllergen","pPrice","pDesc"].forEach(id=>document.getElementById(id).value="");pEnabled.value="true";pShowPrice.value="true";productIndex.value=""}
+function addProduct(){clearProductForm();window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"})}
+function editProduct(i){let p=data.products[i];productIndex.value=i;pCode.value=p.code;pName.value=p.name;pCategory.value=p.category;pEnabled.value=String(p.enabled);pWeight.value=p.weight;pPack.value=p.pack;pStorage.value=p.storage;pDelivery.value=p.delivery;pShelf.value=p.shelf;pVegetarian.value=p.vegetarian;pAllergen.value=p.allergen;pPrice.value=p.price;pShowPrice.value=String(p.showPrice);pDesc.value=p.description}
+function saveProduct(){let p={enabled:pEnabled.value==="true",code:pCode.value,name:pName.value,category:pCategory.value,weight:pWeight.value,pack:pPack.value,storage:pStorage.value,delivery:pDelivery.value,shelf:pShelf.value,vegetarian:pVegetarian.value,allergen:pAllergen.value,price:pPrice.value,showPrice:pShowPrice.value==="true",description:pDesc.value};let i=productIndex.value;if(i==="")data.products.push(p);else data.products[+i]=p;persist();clearProductForm();renderProducts();alert("產品已儲存")}
+function duplicateProduct(i){let p=clone(data.products[i]);p.code=p.code+"-COPY";p.name=p.name+"（複製）";data.products.push(p);persist();renderProducts()}
+function toggleProduct(i){data.products[i].enabled=!data.products[i].enabled;persist();renderProducts()}
+function removeProduct(i){if(confirm("確定刪除此產品？正式版建議以停用取代刪除。")){data.products.splice(i,1);persist();renderProducts()}}
+function saveCategories(){data.categories=categoryText.value.split("\n").map(x=>x.trim()).filter(Boolean);persist();renderProducts();alert("分類已儲存")}
+function saveDraft(){data.history.push({action:"儲存草稿",time:new Date().toLocaleString()});persist();renderDashboard();alert("草稿已儲存")}
+function publishSite(){data.history.push({action:"發布更新",time:new Date().toLocaleString()});persist();renderDashboard();alert("CMS 樣本已記錄發布。正式串接 GAS 後，這裡會同步到 Google Sheets 並更新前台。")}
+function previewSite(){window.open("../","_blank")}
+function exportBackup(){let blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="sunny-baking-cms-backup.json";a.click();URL.revokeObjectURL(a.href)}
+function importBackup(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{data=JSON.parse(r.result);persist();location.reload()}catch(err){alert("JSON 格式不正確")}};r.readAsText(f)}
+function resetData(){if(confirm("確定還原 CMS 預設資料？")){data=clone(DEFAULT_DATA);persist();location.reload()}}
+bindFields();renderProducts();renderDashboard();
+</script>
+</body>
+</html>
