@@ -247,11 +247,92 @@ const DEFAULT_API_URL="https://script.google.com/macros/s/AKfycbxmwjvvrqaUkhKaH1
 function getApiUrl(){return (document.getElementById("apiUrl")?.value||DEFAULT_API_URL).trim()}
 function getAdminKey(){return (document.getElementById("adminKey")?.value||sessionStorage.getItem("sunnyCmsAdminKey")||"").trim()}
 function rememberAdminKey(){const k=document.getElementById("adminKey")?.value||"";if(k)sessionStorage.setItem("sunnyCmsAdminKey",k)}
+function buildApiPayload(){
+  const specialtyRows=[
+    {type:"frozen_dough",title:"冷凍麵糰",flow:data.specialty.frozenDough||"",status:"active",sort:1},
+    {type:"shaped_dough",title:"整形冷凍麵糰",flow:data.specialty.shapedDough||"",status:"active",sort:2},
+    {type:"prebaked",title:"預烤焙冷凍麵包",flow:data.specialty.prebaked||"",status:"active",sort:3},
+    {type:"pref_proofed",title:"預發酵冷凍麵糰",flow:data.specialty.prefProofed||"",status:"inactive",sort:4}
+  ];
+  const productRows=(data.products||[]).map((p,i)=>({
+    enabled:!!p.enabled,
+    code:p.code||"",
+    name:p.name||"",
+    category:p.category||"",
+    weight:p.weight||"",
+    pack:p.pack||"",
+    storage:p.storage||"",
+    delivery:p.delivery||"",
+    shelf_life:p.shelf||"",
+    vegetarian:p.vegetarian||"",
+    allergen:p.allergen||"",
+    price:p.price||"",
+    show_price:!!p.showPrice,
+    description:p.description||"",
+    sort:i+1
+  }));
+  const categoryRows=(data.categories||[]).map((name,i)=>({
+    enabled:true,
+    name:name,
+    sort:i+1
+  }));
+  const qualityRows=[
+    {enabled:true,type:"registration",name:"食品相關登記",detail:data.quality.registrations||"",sort:1},
+    {enabled:true,type:"insurance",name:"產品責任險",detail:[data.quality.insurer||"",data.quality.insuranceAmount||""].filter(Boolean).join("｜"),sort:2}
+  ];
+  return {
+    home:{
+      site_title:"日心食品 Sunny Baking",
+      hero_title:data.home.title||"",
+      hero_subtitle:data.home.subtitle||"",
+      hero_description:data.home.description||"",
+      cta_primary:data.home.ctaPrimary||"",
+      cta_secondary:data.home.ctaSecondary||"",
+      publish_status:"draft"
+    },
+    about:{
+      company:data.about.company||"",
+      brand_en:data.about.brandEn||"",
+      origin_year:data.about.originYear||"",
+      transform_year:data.about.transformYear||"",
+      history:data.about.history||"",
+      factory:data.about.factory||"",
+      b2b:data.about.b2b||""
+    },
+    specialty:specialtyRows,
+    products:productRows,
+    categories:categoryRows,
+    oem:{
+      title:data.oem.title||"",
+      description:data.oem.description||"",
+      catalog_share:data.oem.catalog||"",
+      oem_share:data.oem.oemShare||"",
+      odm_share:data.oem.odmShare||"",
+      moq:data.oem.moq||""
+    },
+    quality:qualityRows,
+    contact:{
+      company:data.contact.company||"",
+      phone:data.contact.phone||"",
+      address:data.contact.address||"",
+      email:data.contact.email||"",
+      line:data.contact.line||"",
+      instagram:data.contact.instagram||"",
+      facebook:data.contact.facebook||""
+    }
+  };
+}
 async function apiPost(action){
   rememberAdminKey();
   const adminKey=getAdminKey();
   if(!adminKey){alert("請先到「網站設定」輸入管理員金鑰");throw new Error("Missing admin key")}
-  const res=await fetch(getApiUrl(),{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action,adminKey,data,user:"CMS Admin"})});
+  const payload=buildApiPayload();
+  if(action==="publish") payload.home.publish_status="published";
+  const res=await fetch(getApiUrl(),{
+    method:"POST",
+    headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body:JSON.stringify({action,adminKey,data:payload,user:"CMS Admin"})
+  });
   return await res.json();
 }
 async function saveDraft(){
