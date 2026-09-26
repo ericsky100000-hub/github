@@ -13,6 +13,29 @@ const SHEETS = {
   admins: '管理員'
 };
 
+/**
+ * 第一次設定管理員金鑰：
+ * 1. 先把下方 CHANGE_ME 改成一組至少 16 碼、不容易猜的字串
+ * 2. 執行 setupAdminKey()
+ * 3. 執行完成後，可把這個函式裡的明碼再改回 CHANGE_ME
+ */
+function setupAdminKey() {
+  const key = 'CHANGE_ME';
+  if (!key || key === 'CHANGE_ME' || key.length < 16) {
+    throw new Error('請先把 CHANGE_ME 改成至少 16 碼的管理員金鑰');
+  }
+  PropertiesService.getScriptProperties().setProperty('SUNNY_CMS_ADMIN_KEY', key);
+  Logger.log('管理員金鑰已設定完成');
+}
+
+function requireAdmin_(body) {
+  const saved = PropertiesService.getScriptProperties().getProperty('SUNNY_CMS_ADMIN_KEY');
+  if (!saved) throw new Error('尚未設定管理員金鑰');
+  if (!body || String(body.adminKey || '') !== saved) {
+    throw new Error('管理員驗證失敗');
+  }
+}
+
 function doGet(e) {
   const action = (e && e.parameter && e.parameter.action) || 'content';
   try {
@@ -32,6 +55,10 @@ function doPost(e) {
   try {
     const body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     const action = body.action || '';
+
+    if (action === 'saveContent' || action === 'publish') {
+      requireAdmin_(body);
+    }
 
     if (action === 'saveContent') {
       saveSiteContent_(body.data || {});
