@@ -236,6 +236,64 @@ th{background:#faf8f5}
 <script>
 let raw = null;
 
+const $ = id => document.getElementById(id);
+const pageTitle=$("pageTitle");
+const mProducts=$("mProducts");
+const mOnline=$("mOnline");
+const mCategories=$("mCategories");
+const mHistory=$("mHistory");
+const historyList=$("historyList");
+const heroTitle=$("heroTitle");
+const heroSubtitle=$("heroSubtitle");
+const heroDescription=$("heroDescription");
+const ctaPrimary=$("ctaPrimary");
+const ctaSecondary=$("ctaSecondary");
+const company=$("company");
+const brandEn=$("brandEn");
+const originYear=$("originYear");
+const transformYear=$("transformYear");
+const companyHistory=$("companyHistory");
+const factory=$("factory");
+const b2b=$("b2b");
+const frozenFlow=$("frozenFlow");
+const shapedFlow=$("shapedFlow");
+const prebakedFlow=$("prebakedFlow");
+const prefProofedFlow=$("prefProofedFlow");
+const productRows=$("productRows");
+const productIndex=$("productIndex");
+const pCode=$("pCode");
+const pName=$("pName");
+const pCategory=$("pCategory");
+const pEnabled=$("pEnabled");
+const pWeight=$("pWeight");
+const pPack=$("pPack");
+const pStorage=$("pStorage");
+const pDelivery=$("pDelivery");
+const pShelf=$("pShelf");
+const pVegetarian=$("pVegetarian");
+const pAllergen=$("pAllergen");
+const pPrice=$("pPrice");
+const pShowPrice=$("pShowPrice");
+const pDesc=$("pDesc");
+const categoryText=$("categoryText");
+const oemTitle=$("oemTitle");
+const oemDescription=$("oemDescription");
+const catalogShare=$("catalogShare");
+const oemShare=$("oemShare");
+const odmShare=$("odmShare");
+const moq=$("moq");
+const registrations=$("registrations");
+const insurer=$("insurer");
+const insuranceAmount=$("insuranceAmount");
+const contactCompany=$("contactCompany");
+const phone=$("phone");
+const address=$("address");
+const email=$("email");
+const line=$("line");
+const instagram=$("instagram");
+const facebook=$("facebook");
+const adminKey=$("adminKey");
+
 document.querySelectorAll("#nav button").forEach(btn=>{
   btn.onclick=()=>{
     document.querySelectorAll("#nav button").forEach(b=>b.classList.remove("active"));
@@ -248,10 +306,18 @@ document.querySelectorAll("#nav button").forEach(btn=>{
 });
 
 function fail(e){
+  mProducts.textContent="!";
+  mOnline.textContent="!";
+  mCategories.textContent="!";
+  mHistory.textContent="!";
   alert("操作失敗：" + (e && e.message ? e.message : e));
 }
 
 function loadData(){
+  mProducts.textContent="…";
+  mOnline.textContent="…";
+  mCategories.textContent="…";
+  mHistory.textContent="…";
   google.script.run
     .withSuccessHandler(r=>{
       if(!r || !r.ok){ alert("資料讀取失敗"); return; }
